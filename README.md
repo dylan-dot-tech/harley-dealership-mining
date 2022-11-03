@@ -1,6 +1,6 @@
 # harley-dealership-mining
 
-Data mining US Harley Davidson dealership data
+Data mining US [Harley Davidson dealership](https://www.harley-davidson.com/us/en/tools/find-a-dealer.html) information
 
 ## Dependencies
 
