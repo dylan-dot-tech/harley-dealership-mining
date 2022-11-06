@@ -1,3 +1,5 @@
+sql/harley.db
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
