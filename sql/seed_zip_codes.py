@@ -14,13 +14,14 @@ import sqlite3
 DATABASE_NAME = 'harley.db'
 ZIP_CODE_NAME = 'ZIP_Locale_Detail.csv'	# Source: https://postalpro.usps.com/ZIP_Locale_Detail
 
-QUERY_CREATE_TABLE = '''CREATE TABLE zip_codes (
+QUERY_CREATE_TABLE = '''CREATE TABLE "zip_codes" (
 	"zip_code"	TEXT NOT NULL UNIQUE,
 	"city"	TEXT NOT NULL,
 	"state"	TEXT NOT NULL,
 	"search_complete"	INTEGER NOT NULL DEFAULT 0,
 	"last_updated"	TEXT,
-	PRIMARY KEY("zip_code"));'''
+	PRIMARY KEY("zip_code")
+);'''
 
 QUERY_ADD_ZIP_CODE = 'INSERT OR IGNORE INTO zip_codes (zip_code, city, state) VALUES (?, ?, ?);'
 
