@@ -4,9 +4,11 @@
 @author: dylan.tech
 @contact: hi@dylan.tech
 @copyright: https://dylan.tech
-@version: 2022-11-04
+@version: 2022-11-06
 '''
 
+import sqlite3
+import traceback
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -16,78 +18,125 @@ from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.firefox import GeckoDriverManager
 
 
-BASE_URL = 'https://www.harley-davidson.com/us/en/tools/find-a-dealer.html'
-zip_code = 49426    # Grand Rapids, MI
-# zip_code = 99782    # Wainwright, AK - no results example
+# ZIP_CODE = 49426    # Grand Rapids, MI
+# ZIP_CODE = 99782    # Wainwright, AK - no results example
+DATABASE_FILENAME = 'sql/harley.db'
 
 
-def get_webdriver():
-	driver = webdriver.Firefox(service=Service(	# Init FF webdriver
-		executable_path=GeckoDriverManager().install()))
-	return driver
+def sanitize_phone(phone):
+    for character in '()-+ ':
+        phone = phone.replace(character, '')
+    return phone
 
-def process_cur_page(dealers):
-	for dealer in dealers:
-		dealer_name = dealer.find_element(By.CLASS_NAME, 'find__results__item__link').text
-		dealer_address_and_phone = dealer.find_element(By.CLASS_NAME, 'b8').text.split('\n')
-		dealer_address = dealer_address_and_phone[0]
-		dealer_phone = dealer_address_and_phone[1]
-		print('Name:\t	{}'.format(dealer_name))
-		print('Address:\t{}'.format(dealer_address))
-		print('Phone:\t	{}'.format(dealer_phone))
-		print('---')
+def sql_get_connection():
+    conn = None
+    try:
+        conn = sqlite3.connect(DATABASE_FILENAME)
+    except Exception as e:
+        print('Error connecting to {}: {}'.format(DATABASE_FILENAME, e))
+    return conn
+
+def sql_get_zip_codes(conn):
+    cur = conn.cursor()
+    cur.execute('SELECT zip_code FROM zip_codes WHERE search_completed=0;')
+    rows = cur.fetchall()
+
+    zip_codes = []
+    for row in rows:
+        zip_codes.append(row[0])
+
+    return zip_codes
+
+def sql_update_zip_code(conn, zip_code):
+    cur = conn.cursor()
+    cur.execute('UPDATE zip_codes SET search_completed=1, datetime_completed=datetime() WHERE zip_code=?;', (zip_code,))
+    conn.commit()
+
+def sql_add_dealer(conn, name, address, phone):
+    cur = conn.cursor()
+    cur.execute('INSERT OR IGNORE INTO dealers (name, address, phone) VALUES (?, ?, ?);', (name, address, phone))
+    conn.commit()
+
 
 try:
-	driver = get_webdriver()
-	driver.get(BASE_URL)
+    # Init DB
+    conn = sql_get_connection()
+    zip_codes = sql_get_zip_codes(conn)
+    # Init Webdriver
+    driver = webdriver.Firefox(service=Service(
+        executable_path=GeckoDriverManager().install()))
+    driver.get('https://www.harley-davidson.com/us/en/tools/find-a-dealer.html')
+    enter_zip = driver.find_element('id', 'find-term')
 
-	# Select 'Enter Zip, Address, or Dealer Name' field
-	enter_zip = driver.find_element('id', 'find-term')
-	# Fill zip code field
-	enter_zip.clear()
-	enter_zip.send_keys(zip_code)
+    for zip_code in zip_codes:
+        # Fill 'Enter ZIP, Address, or Dealer Name' field
+        enter_zip.clear()
+        enter_zip.send_keys(zip_code)
 
-	# Wait for 'Search' button to load after zip code field is filled, click
-	# when available
-	WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
-		(By.CLASS_NAME, 'find__form__submit__button'))).click()
+        # Wait for 'Search' button to load after zip code field is filled, click
+        WebDriverWait(driver, 6).until(EC.element_to_be_clickable(
+            (By.CLASS_NAME, 'find__form__submit__button'))).click()
 
-	# Get number of dealers near zip code, caps at 50
-	num_results = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.CLASS_NAME, 'find__results__head__count')))
-	# Example num_results >> '50 dealers near Hudsonville, MI 49426, USA'
-	num_dealers = int(num_results.text.split()[0])	# Get number of dealers from above string
-	print('Number of dealers: {}'.format(num_dealers))
+        # Get search results
+        try:
+            WebDriverWait(driver, 6).until(EC.visibility_of_element_located((By.CLASS_NAME, 'find__results__list')))
+        except:
+            # No search results
+            sql_update_zip_code(conn, zip_code)
+            continue
 
-	# Wait for search results to load, TODO: if no results, exception is thrown
-	WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
-		(By.CLASS_NAME, 'find__results__list')))
+        # Get number of search result pages
+        results_pagination = int(
+            driver.find_element(
+                By.CLASS_NAME,
+                'find__results__pagination__page__total').text)
 
-	# Get number of search result pages
-	results_pagination = int(driver.find_element(By.CLASS_NAME, 'find__results__pagination__page__total').text)
-	print('Results pagination total: {}'.format(results_pagination))
+        # For each search result page
+        current_page = 1
+        while (current_page <= results_pagination):
+            # Get list of dealers on current page
+            dealers = driver.find_elements(By.CLASS_NAME, 'find__results__item')
+            # Process dealers on current page
+            for dealer in dealers:
+                # Get name
+                name = dealer.find_element(
+                    By.CLASS_NAME, 'find__results__item__link').text
 
-	# For each search result page
-	current_page = 1
-	while (current_page <= results_pagination):
-		print('Current Page: {}'.format(current_page))
+                # Get contact
+                contact = dealer.find_element(
+                    By.CLASS_NAME, 'b8').text.split('\n')
 
-		# Get list of dealers on current page
-		dealers = driver.find_elements(By.CLASS_NAME, 'find__results__item')
-		# Process dealers on current page
-		process_cur_page(dealers)
+                # Get address from contact
+                address = contact[0]
 
-		# Click on 'Next' page button, if enabled
-		next_button = driver.find_element(By.CLASS_NAME, 'find__results__pagination__dir--next')
-		if next_button.is_enabled():
-			next_button.click()
+                # Get phone from contact, if exists
+                if len(contact) > 1:
+                    phone = sanitize_phone(contact[1])
+                else:
+                    phone = None
 
-		# End while loop
-		current_page = current_page + 1
+                # Add dealer to DB, duplicates ignored via query
+                sql_add_dealer(conn, name, address, phone)
 
-except Exception as err:
-	print('Exception!')
-	print(err)
+            # Click on 'Next' page button, if enabled
+            next_button = driver.find_element(
+                By.CLASS_NAME, 'find__results__pagination__dir--next')
+            if next_button.is_enabled():
+                next_button.click()
 
-finally:
-	driver.quit()
-	print('Done')
+            # End current search page
+            current_page = current_page + 1
+
+        # End current zip code search
+        sql_update_zip_code(conn, zip_code)
+        print('Finished searching {}'.format(zip_code))
+
+    # Done
+    if driver: driver.quit()
+    if conn: conn.close()
+    print('Done')
+
+except:
+    # if driver: driver.quit()
+    if conn: conn.close()
+    traceback.print_exc()
