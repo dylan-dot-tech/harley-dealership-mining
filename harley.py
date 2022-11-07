@@ -18,8 +18,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.firefox import GeckoDriverManager
 
 
-# ZIP_CODE = 49426    # Grand Rapids, MI
-# ZIP_CODE = 99782    # Wainwright, AK - no results example
 DATABASE_FILENAME = 'sql/harley.db'
 
 
@@ -137,6 +135,6 @@ try:
     print('Done')
 
 except:
-    # if driver: driver.quit()
+    if driver: driver.quit()
     if conn: conn.close()
     traceback.print_exc()
