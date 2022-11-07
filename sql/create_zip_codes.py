@@ -4,7 +4,7 @@
 @author: dylan.tech
 @contact: hi@dylan.tech
 @copyright: https://dylan.tech
-@version: 2022-11-06
+@version: 2022-11-07
 '''
 
 import csv
@@ -18,8 +18,8 @@ QUERY_CREATE_TABLE = '''CREATE TABLE "zip_codes" (
 	"zip_code"	TEXT NOT NULL UNIQUE,
 	"city"	TEXT NOT NULL,
 	"state"	TEXT NOT NULL,
-	"search_complete"	INTEGER NOT NULL DEFAULT 0,
-	"last_updated"	TEXT,
+	"search_completed"	INTEGER NOT NULL DEFAULT 0,
+	"datetime_completed"	TEXT,
 	PRIMARY KEY("zip_code")
 );'''
 
