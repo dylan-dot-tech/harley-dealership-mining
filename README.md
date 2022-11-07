@@ -18,10 +18,16 @@ Data mining US [Harley Davidson dealership](https://www.harley-davidson.com/us/e
 sudo mv geckodriver-vX.XX.X-linux64 /usr/local/bin/geckodriver-vX.XX.X-linux64
 ```
 
-4. Install PIP dependencies:
+4. Install `pip` dependencies:
 
 ```sh
 pip install -r config/requirements.txt
+```
+
+5. Create `sqlite3` backend:
+
+```sh
+./create_zip_codes.py && ./create_dealers.py
 ```
 
 ## Zip Codes
