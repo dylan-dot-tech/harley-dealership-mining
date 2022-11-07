@@ -27,7 +27,7 @@ pip install -r config/requirements.txt
 5. Create `sqlite3` backend:
 
 ```sh
-./sql/create_zip_codes.py && ./sql/create_dealers.py
+cd sql && ./create_zip_codes.py && ./create_dealers.py
 ```
 
 ## Zip Codes
