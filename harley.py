@@ -13,6 +13,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.firefox import GeckoDriverManager
@@ -61,7 +62,9 @@ try:
     conn = sql_get_connection()
     zip_codes = sql_get_zip_codes(conn)
     # Init Webdriver
-    driver = webdriver.Firefox(service=Service(
+    options = Options()
+    options.headless = True
+    driver = webdriver.Firefox(options=options, service=Service( 
         executable_path=GeckoDriverManager().install()))
     driver.get('https://www.harley-davidson.com/us/en/tools/find-a-dealer.html')
     enter_zip = driver.find_element('id', 'find-term')
