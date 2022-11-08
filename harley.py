@@ -4,7 +4,7 @@
 @author: dylan.tech
 @contact: hi@dylan.tech
 @copyright: https://dylan.tech
-@version: 2022-11-07
+@version: 2022-11-08
 '''
 
 import sqlite3
@@ -22,12 +22,19 @@ from webdriver_manager.firefox import GeckoDriverManager
 DATABASE_FILENAME = 'sql/harley.db'
 
 
+def init_webdriver():
+    options = Options()
+    options.headless = True
+    driver = webdriver.Firefox(options=options, service=Service(
+        executable_path=GeckoDriverManager().install()))
+    return driver
+
 def sanitize_phone(phone):
     for character in '()-+ ':
         phone = phone.replace(character, '')
     return phone
 
-def sql_get_connection():
+def sql_init_connection():
     conn = None
     try:
         conn = sqlite3.connect(DATABASE_FILENAME)
@@ -37,7 +44,7 @@ def sql_get_connection():
 
 def sql_get_zip_codes(conn):
     cur = conn.cursor()
-    cur.execute('SELECT zip_code FROM zip_codes WHERE search_completed=0;')
+    cur.execute('SELECT zip_code FROM zip_codes WHERE search_completed=0 ORDER BY zip_code ASC;')
     rows = cur.fetchall()
 
     zip_codes = []
@@ -59,13 +66,10 @@ def sql_add_dealer(conn, name, address, phone):
 
 try:
     # Init DB
-    conn = sql_get_connection()
+    conn = sql_init_connection()
     zip_codes = sql_get_zip_codes(conn)
     # Init Webdriver
-    options = Options()
-    options.headless = True
-    driver = webdriver.Firefox(options=options, service=Service( 
-        executable_path=GeckoDriverManager().install()))
+    driver = init_webdriver()
     driver.get('https://www.harley-davidson.com/us/en/tools/find-a-dealer.html')
     enter_zip = driver.find_element('id', 'find-term')
 
