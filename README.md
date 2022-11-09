@@ -7,6 +7,7 @@ Data mining US [Harley Davidson dealership](https://www.harley-davidson.com/us/e
 - [Python 3.x](https://www.python.org/downloads/)
 - [Firefox Geckodriver](https://github.com/mozilla/geckodriver/releases)
 - See [config/requirements.txt](config/requirements.txt) for PIP dependencies
+- [libpostal](https://github.com/openvenues/libpostal#installation-maclinux)
 
 ### Initial Setup
 
