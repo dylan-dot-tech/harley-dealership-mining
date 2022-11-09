@@ -4,7 +4,7 @@
 @author: dylan.tech
 @contact: hi@dylan.tech
 @copyright: https://dylan.tech
-@version: 2022-11-08
+@version: 2022-11-09
 '''
 
 import sqlite3
@@ -89,6 +89,8 @@ try:
         # Fill 'Enter ZIP, Address, or Dealer Name' field
         enter_zip.clear()
         enter_zip.send_keys(zip_code)
+        # Click elsewhere to dismiss address suggestions that obscure 'Search' button
+        driver.find_element(By.CLASS_NAME, 'flex-grow-1').click()   # 'Find a H-D Dealer' title
 
         # Wait for 'Search' button to load after zip code field is filled, click
         WebDriverWait(driver, 6).until(EC.element_to_be_clickable(
@@ -159,8 +161,8 @@ try:
     print('Done')
 
 except BaseException:
-    if driver:
-        driver.quit()
+    # if driver:
+    #     driver.quit()
     if conn:
         conn.close()
     traceback.print_exc()
