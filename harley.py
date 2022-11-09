@@ -29,10 +29,12 @@ def init_webdriver():
         executable_path=GeckoDriverManager().install()))
     return driver
 
+
 def sanitize_phone(phone):
     for character in '()-+ ':
         phone = phone.replace(character, '')
     return phone
+
 
 def sql_init_connection():
     conn = None
@@ -42,9 +44,11 @@ def sql_init_connection():
         print('Error connecting to {}: {}'.format(DATABASE_FILENAME, e))
     return conn
 
+
 def sql_get_zip_codes(conn):
     cur = conn.cursor()
-    cur.execute('SELECT zip_code FROM zip_codes WHERE search_completed=0 ORDER BY zip_code ASC;')
+    cur.execute(
+        'SELECT zip_code FROM zip_codes WHERE search_completed=0 ORDER BY zip_code ASC;')
     rows = cur.fetchall()
 
     zip_codes = []
@@ -53,14 +57,22 @@ def sql_get_zip_codes(conn):
 
     return zip_codes
 
+
 def sql_update_zip_code(conn, zip_code):
     cur = conn.cursor()
-    cur.execute('UPDATE zip_codes SET search_completed=1, datetime_completed=datetime() WHERE zip_code=?;', (zip_code,))
+    cur.execute(
+        'UPDATE zip_codes SET search_completed=1, datetime_completed=datetime() WHERE zip_code=?;',
+        (zip_code,))
     conn.commit()
+
 
 def sql_add_dealer(conn, name, address, phone):
     cur = conn.cursor()
-    cur.execute('INSERT OR IGNORE INTO dealers (name, address, phone) VALUES (?, ?, ?);', (name, address, phone))
+    cur.execute(
+        'INSERT OR IGNORE INTO dealers (name, address, phone) VALUES (?, ?, ?);',
+        (name,
+         address,
+         phone))
     conn.commit()
 
 
@@ -84,8 +96,10 @@ try:
 
         # Get search results
         try:
-            WebDriverWait(driver, 6).until(EC.visibility_of_element_located((By.CLASS_NAME, 'find__results__list')))
-        except:
+            WebDriverWait(driver, 6).until(
+                EC.visibility_of_element_located(
+                    (By.CLASS_NAME, 'find__results__list')))
+        except BaseException:
             # No search results
             sql_update_zip_code(conn, zip_code)
             continue
@@ -100,7 +114,8 @@ try:
         current_page = 1
         while (current_page <= results_pagination):
             # Get list of dealers on current page
-            dealers = driver.find_elements(By.CLASS_NAME, 'find__results__item')
+            dealers = driver.find_elements(
+                By.CLASS_NAME, 'find__results__item')
             # Process dealers on current page
             for dealer in dealers:
                 # Get name
@@ -137,11 +152,15 @@ try:
         print('Finished searching {}'.format(zip_code))
 
     # Done
-    if driver: driver.quit()
-    if conn: conn.close()
+    if driver:
+        driver.quit()
+    if conn:
+        conn.close()
     print('Done')
 
-except:
-    if driver: driver.quit()
-    if conn: conn.close()
+except BaseException:
+    if driver:
+        driver.quit()
+    if conn:
+        conn.close()
     traceback.print_exc()
