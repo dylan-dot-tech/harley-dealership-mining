@@ -161,8 +161,8 @@ try:
     print('Done')
 
 except BaseException:
-    # if driver:
-    #     driver.quit()
+    if driver:
+        driver.quit()
     if conn:
         conn.close()
     traceback.print_exc()
