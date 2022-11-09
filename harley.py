@@ -19,13 +19,12 @@ from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.firefox import GeckoDriverManager
 
 
-DATABASE_FILENAME = 'sql/harley.db'
-
-
 def init_webdriver():
+    WEBDRIVER_LOG_FILEPATH = 'logs/geckodriver.log'
     options = Options()
     options.headless = True
-    driver = webdriver.Firefox(options=options, service=Service(
+
+    driver = webdriver.Firefox(options=options, service=Service(log_path=WEBDRIVER_LOG_FILEPATH, 
         executable_path=GeckoDriverManager().install()))
     return driver
 
@@ -37,7 +36,9 @@ def sanitize_phone(phone):
 
 
 def sql_init_connection():
+    DATABASE_FILENAME = 'sql/harley.db'
     conn = None
+
     try:
         conn = sqlite3.connect(DATABASE_FILENAME)
     except Exception as e:
